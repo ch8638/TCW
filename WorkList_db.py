@@ -288,7 +288,7 @@ class WorkList_db_class(metaclass=Singleton):
         return 1
 
     # plrn 파일 생성
-    def make_plrn(self, id_plrn):
+    def make_plrn(self, id_plrn, Control_Count):
         try:
             self.id_plrn = str(id_plrn)
             conn = sqlite3.connect(db_con)
@@ -323,13 +323,13 @@ class WorkList_db_class(metaclass=Singleton):
                 temp = self.get_channel(value)
                 fluorophores[temp[0][0] - 1] = temp[0][1]
 
-
             cur.execute("select Smp_bcd from Info_smp where ID = (%s)" % ("'" + self.id_plrn + "'"))
             info_smp = cur.fetchall()
 
             smp_num = info_plrn[0][3]  # 샘플 개수
             control = info_plrn[0][6]  # NC, PC 순서
-            ctrl_cnt = 2  # control 개수(NC 1개 + PC n개)
+            ctrl_cnt = Control_Count - 1  # control 개수(NC 1개 + PC n개)
+
             smp_list = []
             for i in range(smp_num):
                 smp_list.append(info_smp[i][0])
@@ -341,7 +341,6 @@ class WorkList_db_class(metaclass=Singleton):
                 for j in range(ctrl_cnt):  # PC count만큼 추가
                     smp_list.append(f"PC{j + 1}")
                 smp_list.append("NC")
-            print(smp_list)
 
             # patient_name 정보
             for sep in range(separate):

@@ -14,8 +14,8 @@ import time
 import MainUI
 import SubUI
 from WorkList_db import WorkList_db_class
-from Dev_DataBase import Dev_DataBase_class
-from DB_Jobs import Job_DataBase_class
+# from Dev_DataBase import Dev_DataBase_class
+# from DB_Jobs import Job_DataBase_class
 
 class Singleton(type):  # Type을 상속받음
     __instances = {}  # 클래스의 인스턴스를 저장할 속성
@@ -41,8 +41,17 @@ class Handler(FileSystemEventHandler):
     def on_created(self, event):  # 파일 생성시
         # Ui_MainWindow.temp_src = "A" #
         temp = event.src_path
+        is_path = temp.rsplit('\\',3)
+        PCR_Dir = is_path[1].find('PCR')
+        SampleRack_Dir = is_path[1].find('SampleRack')
         temp = temp.replace('\\', '/')  # 경로는 \\가 아닌 /로 치환
-        DB.Inst_bcd_path(event.src_path)
+
+        if PCR_Dir != -1 or SampleRack_Dir != -1:
+            Dir_Path = DB.Sel_Bcd()
+            Dir_Path = Dir_Path[0][0].rsplit('\\', 3)
+            Dir_Path = Dir_Path[2].upper()
+            Except_Onestep = Dir_Path.find("ONESTEP")
+
 
         if event.is_directory:
             print("디렉토리 생성")
@@ -55,26 +64,26 @@ class Handler(FileSystemEventHandler):
             Fname, Extension = os.path.splitext(os.path.basename(event.src_path))
             '''
              1. zip 파일
-
              2. exe 파일
-
              3. lnk 파일
-        
             '''
-            # Extraction명이 들어간 경우는 화면 안나타게끔 예외처리
-            # Protocol1 = temp.find("Allplex GI-EB")
-            # Protocol2 = temp.find("Allplex GI-Virus")
-            # Protocol3 = temp.find("Allplex II HPV HR")
-            # Protocol4 = temp.find("Allplex II HPV 28")
-            # Protocol5 = temp.find("Allplex RV Master")
 
-            if Extension == '.txt':  # txt 파일만 추출
-                # if Protocol1 != -1 or Protocol2 != -1 or Protocol3 != -1 or Protocol4 != -1 or Protocol5 != -1:
-                    # 해당 Protocol이 들어가는 경우에만, Main 화면 띄워주는 시그널을 1로 줌
-                Watcher.temp = 1
-                import shutil  # 파일을 다른곳에 백업 시켜둠.
-                os.makedirs("C:\\Barcode\\", exist_ok=True)
-                shutil.copy(event.src_path, "C:\\Barcode\\")
+            # txt 파일만 추출
+            if Extension == '.txt':
+                if SampleRack_Dir != -1:
+                    DB.Inst_bcd_path(event.src_path)
+                    Watcher.temp = 1
+                    import shutil  # 파일을 다른곳에 백업 시켜둠.
+                    os.makedirs("C:\\Barcode\\", exist_ok=True)
+                    shutil.copy(event.src_path, "C:\\Barcode\\")
+
+                if PCR_Dir != -1:
+                    DB.Inst_bcd_path(event.src_path)
+                    if Except_Onestep == -1:
+                        Watcher.temp = 1
+                        import shutil  # 파일을 다른곳에 백업 시켜둠.
+                        os.makedirs("C:\\Barcode\\", exist_ok=True)
+                        shutil.copy(event.src_path, "C:\\Barcode\\")
 
             elif Extension == '.exe':
 
@@ -125,7 +134,6 @@ class Watcher(metaclass=Singleton):
             self.event_handler,
             self.target_directory,
             recursive=True
-
         )
         self.observer.start()  # 감시 시작
         try:
@@ -179,8 +187,8 @@ if __name__ == "__main__":
 
     PE_path = DB.show_PE_path()
     PE_path = (PE_path[0][0])
-    DB_Info = DB.Show_Flag() #DB Flag 값 읽어옴 0 : 초기상태 Setting 1: Setting 된 상태
-
+    # DB_Info = DB.Show_Flag() #DB Flag 값 읽어옴 0 : 초기상태 Setting 1: Setting 된 상태
+    #
     # DB_Dev = Dev_DataBase_class() # Dev에 대한 클래스 객체 생성
     # DB_Job = Job_DataBase_class() # Job에 대한 클래스 객체 생성
     # if DB_Info == 0:
